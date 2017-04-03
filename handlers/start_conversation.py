@@ -1,5 +1,5 @@
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
-from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
+from telegram.ext import (Updater, Job, CommandHandler, MessageHandler, Filters, RegexHandler,
                           ConversationHandler)
 import logging
 logger = logging.getLogger(__name__)
@@ -29,13 +29,31 @@ def age(bot, update):
     return WEIGHT
 
 
-def weight(bot, update):
+def weight(bot, update, job_queue):
     user = update.message.from_user
     logger.info("Weight of %s: %s" % (user.first_name, update.message.text))
     update.message.reply_text('Good. Now I have all information I need to create your personal diet. '
                               'I`ll send it to you as soon as our professional coaches approve it.')
 
+    chat_id = update.message.chat_id
+    logger.info('[%s] Adding job.' % chat_id)
+
+    try:
+        # if chat_id not in jobs:
+        job = Job(alarm, 30, repeat=False, context=(chat_id, "Other"))
+        job_queue.put(job)
+    except Exception as e:
+        logger.error('[%s] %s' % (chat_id, repr(e)))
+
     return ConversationHandler.END
+
+
+def alarm(bot, job):
+    chat_id = job.context[0]
+    message = job.context[1]
+    logger.info('[%s] Checking alarm.' % chat_id)
+
+    bot.sendMessage(chat_id, message)
 
 
 def cancel(bot, update):
@@ -58,7 +76,7 @@ def get_start_conversation_handler():
         states={
             AGE: [RegexHandler('^(<20|20-30|30-40|40-50|>50)$', age)],
 
-            WEIGHT: [MessageHandler(Filters.text, weight)]
+            WEIGHT: [MessageHandler(Filters.text, weight, pass_job_queue=True)]
         },
 
         fallbacks=[CommandHandler('cancel', cancel)]
