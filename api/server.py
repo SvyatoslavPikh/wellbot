@@ -3,6 +3,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from telegram.ext import Job
 from lib.chatscript import ChatScript
 
+
 class ApiServer(object):
 
     def __init__(self):
@@ -54,8 +55,7 @@ class RestApiHandler(BaseHTTPRequestHandler):
     def alarm(self, bot, job):
         chat_id = job.context[0]
         message = job.context[1]
-        self.logger.info('[%s] Checking alarm.' % chat_id)
 
         chat_script = ChatScript()
         answer = chat_script.send_message(chat_id, 'HARRY', message)
-        bot.sendMessage(chat_id, message)
+        bot.sendMessage(chat_id, answer)
