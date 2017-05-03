@@ -1,12 +1,13 @@
 API_KEY = ''
 
-DB_TYPE = 'postgresql'
-DB_LOGIN = 'login'
-DB_PASSWORD = 'password'
-DB_ADDRESS = '127.0.0.1:5432'
-DB_NAME = 'wellbot'
+DB_TYPE = ''
+DB_LOGIN = ''
+DB_PASSWORD = ''
+DB_ADDRESS = ''
+DB_NAME = ''
 
 try:
     from local_settings import *
 except ImportError:
     pass
+
