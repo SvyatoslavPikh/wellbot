@@ -31,7 +31,7 @@ class ChatScript(object):
         return True
 
     def send_message(self, user_id, bot_name, message):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((self.host, self.port))
-        chat_message = Message(user_id, bot_name, message)
-        return chat_message.send(sock)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((self.host, self.port))
+            chat_message = Message(user_id, bot_name, message)
+            return chat_message.send(sock)

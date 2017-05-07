@@ -13,32 +13,12 @@ logging.basicConfig()
 logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 
-class Db(object):
+class Scheduler(object):
     def __init__(self):
-        self.session = None
-        self.engine = None
-        db_type = settings.DB_TYPE
-        db_login = settings.DB_LOGIN
-        db_password = settings.DB_PASSWORD
-        db_address = settings.DB_ADDRESS
-        db_name = settings.DB_NAME
-        db_connection_str = '%s://%s:%s@%s/%s' % (db_type, db_login, db_password, db_address, db_name)
-        print('db_connection_str %s' % db_connection_str)
-
-        self.engine = create_engine(db_connection_str, echo=True)
-        # Base.metadata.drop_all(bind=self.engine)
-        Base.metadata.create_all(bind=self.engine)
-
-    def get_session(self):
-        if not self.engine:
-            raise Exception('Engine not defined. You need to init db connection with init_db() method first.')
-        if not self.session:
-            self.session = sessionmaker(bind=self.engine)()
-        return self.session
+        self.db = Db()
 
     def test(self, chat_id, user_name):
-        # '333551684'
-        session = self.get_session();
+        session = self.db.get_session();
         first_user = session.query(User).filter_by(chat_id=chat_id).scalar()
         if not first_user:
             first_user = User(name=user_name, chat_id=chat_id, age=25, weight=65.5)
@@ -61,3 +41,25 @@ class Db(object):
 
         session.commit()
         return test_menu
+
+
+class Db(object):
+    def __init__(self):
+        self.session = None
+        self.engine = None
+        db_type = settings.DB_TYPE
+        db_login = settings.DB_LOGIN
+        db_password = settings.DB_PASSWORD
+        db_address = settings.DB_ADDRESS
+        db_name = settings.DB_NAME
+        db_connection_str = '%s://%s:%s@%s/%s' % (db_type, db_login, db_password, db_address, db_name)
+        print('db_connection_str %s' % db_connection_str)
+
+        self.engine = create_engine(db_connection_str, echo=True)
+        # Base.metadata.drop_all(bind=self.engine)
+        Base.metadata.create_all(bind=self.engine)
+
+    def get_session(self):
+        if not self.engine:
+            raise Exception('Engine not defined. You need to init db connection with init_db() method first.')
+        return sessionmaker(bind=self.engine)()
