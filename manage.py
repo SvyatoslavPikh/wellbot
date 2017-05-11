@@ -1,13 +1,14 @@
-from settings import API_KEY
-from telegram.ext import Updater, JobQueue, CommandHandler
-import logging
-import threading
-from api.server import ApiServer
-from handlers.start_conversation import get_start_conversation_handler
-from telegram.ext import (Job, Updater, MessageHandler, Filters)
-from lib.chatscript import ChatScript
-from utils.db import Db
 import datetime
+import logging
+
+from telegram.ext import CommandHandler
+from telegram.ext import (Job, Updater, MessageHandler, Filters)
+
+import api
+from lib.chatscript import ChatScript
+from scheduler import Scheduler
+
+from settings import API_KEY
 
 
 def answer(bot, update):
@@ -35,23 +36,20 @@ logging.basicConfig(format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-# db
-db = Db()
-
 
 def test(bot, update, job_queue):
     chat_id = update.message.from_user.id
     user_name = update.message.from_user.username
     if not user_name:
         user_name = '%s %s' % (update.message.from_user.first_name, update.message.from_user.last_name)
-    menu = db.test(str(chat_id), user_name)
-    for tak in menu.takings:
-        try:
-            # if chat_id not in jobs:
-            job = Job(alarm, (tak.datetime - datetime.datetime.now()).seconds, repeat=False, context=(chat_id, tak.message))
-            job_queue.put(job)
-        except Exception as e:
-            logger.error('[%s] %s' % (chat_id, repr(e)))
+    menu = scheduler.test(str(chat_id), user_name)
+    # for tak in menu.takings:
+    #     try:
+    #         # if chat_id not in jobs:
+    #         job = Job(alarm, (tak.datetime - datetime.datetime.now()).seconds, repeat=False, context=(chat_id, tak.message))
+    #         job_queue.put(job)
+    #     except Exception as e:
+    #         logger.error('[%s] %s' % (chat_id, repr(e)))
     update.message.reply_text('Test takings scheduled')
 
 
@@ -67,9 +65,11 @@ def alarm(bot, job):
 updater = Updater(API_KEY)
 
 # REST API
-api_server = ApiServer()
-api_server.start(updater)
 
+api.start(context=updater)
+
+# scheduler
+scheduler = Scheduler()
 
 updater.dispatcher.add_handler(MessageHandler(Filters.text, answer))
 # updater.dispatcher.add_handler(get_start_conversation_handler())
